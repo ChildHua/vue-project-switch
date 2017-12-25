@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        .tab-content {
+            border: 1px solid #e3e3e3;
+            border-top-color: white;
+        }
+
+        .row {
+            margin-top: 20px !important;
+        }
+
+        .row td {
+            width: 50%;
+            border-bottom: 1px solid #ddd;
+            border-top: 0 !important;
+        }
+    </style>
+    <script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.js"></script>
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+
+    <script src="js/vue.js"></script>
+
+    <meta charset="UTF-8">
+    <title>vue-switch</title>
+</head>
+<body>
+<div class="container-fluid">
+    <h1 class="text-center">vue-switch</h1>
+    <ul id="nav" role="tablist" class="nav nav-tabs">
+        <li v-for="(list,index) in lists" role="presentation" :class="list.classObj" @click="active(index)">
+            <a href="#">{{list.text}}</a>
+        </li>
+    </ul>
+    <!-- Tab panes -->
+    <div class="tab-content">
+        <div id="storage" role="tabpanel" class="tab-pane container active" id="home">
+            <div class="row">
+                <div class="col-md-5">
+                    <my-input :value="input" @input="input = arguments[0]"></my-input>
+                </div>
+                <div class="col-md-3">
+                    <select-unit :units="units" :value="now" @change="now = arguments[0]"></select-unit>
+                </div>
+                <div class="col-md-1">
+                    <reversal v-on:click="reversal"></reversal>
+                </div>
+                <div class="col-md-3">
+                    <select-unit :units="[{value:'all',text:'全部'}].concat(units)" :value="future" @change="future = arguments[0]"></select-unit>
+                </div>
+            </div>
+            <div class="row">
+                <div v-if="display.all" class="col-md-6">
+                    <table style="width: 80%;margin: auto" class="table">
+                        <tbody>
+                        <tr>
+                            <td>{{bit}}</td>
+                            <td>比特(bit)</td>
+                        </tr>
+                        <tr>
+                            <td>{{b}}</td>
+                            <td>字节(b)</td>
+                        </tr>
+                        <tr>
+                            <td>{{kb}}</td>
+                            <td>千字节(kb)</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div v-if="display.all" class="col-md-6">
+                    <table style="width: 80%;margin: auto" class="table">
+                        <tbody>
+                        <tr>
+                            <td>{{mb}}</td>
+                            <td>兆字节(mb)</td>
+                        </tr>
+                        <tr>
+                            <td>{{gb}}</td>
+                            <td>千兆字节(gb)</td>
+                        </tr>
+                        <tr>
+                            <td>{{tb}}</td>
+                            <td>太字节(tb)</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div v-if="display.clear" class="col-md-12">
+                    <detail :detail="display.clearData"></detail>
+                </div>
+                <unit content="国际单位：字节(b)"></unit>
+            </div>
+        </div>
+        <div role="tabpanel" class="tab-pane container" id="profile">b</div>
+        <div role="tabpanel" class="tab-pane container" id="messages">c</div>
+        <div role="tabpanel" class="tab-pane container" id="settings">...</div>
+    </div>
+</div>
+</div>
+</body>
+
+<script>
+
+    Vue.component('my-input', {
+        template: '' +
+        '<input ref="input" :value="value" @input="syncParent($event.target.value)" class="form-control text-right" placeholder="请输入数值">',
+        props: ['value'],
+        methods: {
+            syncParent: function (value) {
+                var formattedValue = value
+                // 删除两侧的空格符
+                    .trim()
+                    // 保留 2 位小数
+                    .slice(
+                        0,
+                        value.indexOf('.') === -1
+                            ? value.length
+                            : value.indexOf('.') + 3
+                    );
+                // 如果值尚不合规，则手动覆盖为合规的值
+                if (formattedValue !== value) {
+                    this.$refs.input.value = formattedValue
+                }
+                // 通过 input 事件带出数值
+                this.$emit('input', Number(formattedValue))
+            }
+        }
+    });
+
+    Vue.component('unit', {
+        template:
+        '                <div class="row">\n' +
+        '                    <div class="col-md-12" style="margin-top: 10px;color: #999;">\n' +
+        '                        <p class="text-right">{{content}}</p>' +
+        '                    </div>\n' +
+        '                </div>',
+        props: ['content']
+    });
+
+    Vue.component('detail', {
+        template: "<h1 style=\"border-bottom: 1px solid #ebebeb;\" class=\"text-center\">{{detail}}</h1>",
+        props: ['detail']
+    });
+
+    Vue.component('reversal', {
+        template: "" +
+        "               <button type=\"button\" class=\"btn btn-default\" aria-label=\"Left Align\" @click='reversal'>\n" +
+        "                   <span class=\"glyphicon glyphicon-transfer\" aria-hidden=\"true\"></span>\n" +
+        "               </button>\n",
+        methods: {
+            reversal: function () {
+                this.$emit('click')
+            }
+        }
+    })
+
+    Vue.component('select-unit',{
+       template:"                    <select class=\"form-control\" :value='value' @change='change($event.target.value)'>\n" +
+       "                        <option :value=\"unit.value\" v-for=\"(unit,index) in units\">{{unit.text}}</option>\n" +
+       "                    </select>",
+        props:['units','value'],
+        methods:{
+           change:function (value) {
+               this.$emit('change',value)
+           }
+        }
+    });
+
+    var nav = new Vue({
+        el: "#nav",
+        data: {
+            lists: [
+                {text: '存储单位', classObj: {active: true}},
+                {text: 'b', classObj: {active: false}},
+                {text: 'c', classObj: {active: false}}
+            ],
+            lastActive: 0
+        },
+        methods: {
+            active: function (even) {
+                this.lists[this.lastActive].classObj.active = false;
+                $(".tab-content").find('.tab-pane.container:eq(' + this.lastActive + ')').attr('class', "tab-pane container");
+                this.lists[even].classObj.active = true;
+                $(".tab-content").find('.tab-pane.container:eq(' + even + ')').attr('class', "tab-pane container active");
+                this.lastActive = even;
+            }
+        }
+    });
+
+    var storage = new Vue({
+        el: "#storage",
+        data: {
+            units: [
+                {value: 'bit', text: '比特'},
+                {value: 'b', text: '字节'},
+                {value: 'kb', text: '千字节'},
+                {value: 'mb', text: '兆字节'},
+                {value: 'gb', text: '千兆字节'},
+                {value: 'tb', text: '钛兆字节'}
+            ],
+            display: {
+                all: true,
+                clear: false,
+                clearData: null
+            },
+            input: 0,
+            now: 'b',
+            future: 'all',
+            b: 0,
+            bit: 0,
+            kb: 0,
+            mb:0,
+            gb:0,
+            tb:0
+        },
+        watch: {
+            input: function () {
+                this.translate()
+            },
+            now: function () {
+                this.translate()
+            },
+            future: function () {
+                if (this.future === 'all') {
+                    this.display.clear = false;
+                    this.display.all = true;
+                } else {
+                    this.display.clearData = this.input + this.now + '=' + this[this.future] + this.future;
+                    this.display.clear = true;
+                    this.display.all = false;
+                }
+            }
+        },
+        methods: {
+            translate: function () {
+                switch (this.now) {
+                    case 'bit':
+                        this.b = this.input / Math.pow(2, 3);
+                        this.bit = this.input;
+                        this.kb = this.input / Math.pow(2, 3) / Math.pow(2, 10);
+                        this.mb = this.input / Math.pow(2, 3) / Math.pow(2, 20);
+                        this.gb = this.input / Math.pow(2, 3) / Math.pow(2, 30);
+                        this.tb = this.input / Math.pow(2, 3) / Math.pow(2, 40);
+                        break;
+                    case 'b':
+                        this.b = this.input;
+                        this.bit = this.input * Math.pow(2, 3);
+                        this.kb = this.input / Math.pow(2, 10);
+                        this.mb = this.input / Math.pow(2, 20);
+                        this.gb = this.input / Math.pow(2, 30);
+                        this.tb = this.input / Math.pow(2, 40);
+                        break;
+                    case 'kb':
+                        this.b = this.input * Math.pow(2, 10);
+                        this.bit = this.input * Math.pow(2, 3) * Math.pow(2, 10);
+                        this.kb = this.input;
+                        this.mb = this.input / Math.pow(2, 10);
+                        this.gb = this.input / Math.pow(2, 20);
+                        this.tb = this.input / Math.pow(2, 30);
+                        break;
+                    case 'mb':
+                        this.b = this.input * Math.pow(2, 20);
+                        this.bit = this.input * Math.pow(2, 3) * Math.pow(2, 20);
+                        this.mb = this.input;
+                        this.kb = this.input * Math.pow(2, 10);
+                        this.gb = this.input / Math.pow(2, 10);
+                        this.tb = this.input / Math.pow(2, 20);
+                        break;
+                    case 'gb':
+                        this.bit = this.input * Math.pow(2, 3) * Math.pow(2, 30);
+                        this.b = this.input * Math.pow(2, 30);
+                        this.kb = this.input * Math.pow(2, 20);
+                        this.mb = this.input * Math.pow(2, 10);
+                        this.gb = this.input;
+                        this.tb = this.input / Math.pow(2, 10);
+                        break;
+                    case 'tb':
+                        this.bit = this.input * Math.pow(2, 3) * Math.pow(2, 40);
+                        this.b = this.input * Math.pow(2, 40);
+                        this.kb = this.input * Math.pow(2, 30);
+                        this.mb = this.input * Math.pow(2, 20);
+                        this.gb = this.input * Math.pow(2, 10);
+                        this.tb = this.input;
+                        break;
+                }
+                if (this.future !== 'all') {
+                    this.display.clearData = this.input + this.now + '=' + this[this.future] + this.future
+                }
+            },
+            reversal: function () {
+                if (this.future !== 'all') {
+                    var now = this.now;
+                    this.now = this.future;
+                    this.future = now;
+                }
+            }
+        }
+    })
+    var bus = new Vue();
+</script>
+</html>
