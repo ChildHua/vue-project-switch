@@ -1,0 +1,14 @@
+.tab-content {
+    border: 1px solid #e3e3e3;
+    border-top-color: white;
+}
+
+.row {
+    margin-top: 20px !important;
+}
+
+.row td {
+    width: 50%;
+    border-bottom: 1px solid #ddd;
+    border-top: 0 !important;
+}

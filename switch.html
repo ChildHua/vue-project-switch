@@ -1,33 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <style>
-        .tab-content {
-            border: 1px solid #e3e3e3;
-            border-top-color: white;
-        }
-
-        .row {
-            margin-top: 20px !important;
-        }
-
-        .row td {
-            width: 50%;
-            border-bottom: 1px solid #ddd;
-            border-top: 0 !important;
-        }
-    </style>
-    <script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.js"></script>
+    <link rel="stylesheet" href="css/switch.css">
     <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
     <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css"
           integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.js"></script>
     <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
     <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"
             integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
             crossorigin="anonymous"></script>
 
     <script src="js/vue.js"></script>
-
     <meta charset="UTF-8">
     <title>vue-switch</title>
 </head>
@@ -179,8 +163,8 @@
         data: {
             lists: [
                 {text: '存储单位', classObj: {active: true}},
-                {text: 'b', classObj: {active: false}},
-                {text: 'c', classObj: {active: false}}
+                {text: '长度', classObj: {active: false}},
+                {text: '面积', classObj: {active: false}}
             ],
             lastActive: 0
         },
@@ -303,7 +287,6 @@
                 }
             }
         }
-    })
-    var bus = new Vue();
+    });
 </script>
 </html>
