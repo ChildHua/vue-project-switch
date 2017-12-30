@@ -14,6 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.4/lodash.min.js"></script>
 
     <script src="js/vue.js"></script>
+    <script src="js/run.js"></script>
     <meta charset="UTF-8">
     <title>vue-switch</title>
 </head>
@@ -99,25 +100,20 @@
                     <reversal v-on:click="reversal"></reversal>
                 </div>
                 <div class="col-md-3">
-                    <select-group-unit :units="[{name:'全部',values:[{value:'all',text:'全部'}]}].concat(units)"
+                    <select-group-unit :units="[{name:'全部',values:[{key:'all',unit:'全部'}]}].concat(units)"
                                        :value="future"
                                        @change="future = arguments[0]"></select-group-unit>
                 </div>
             </div>
             <div class="row">
                 <div v-if="display.all" class="col-md-6">
-                    <h3>公制</h3>
-                    <result-list :results="results.metric"></result-list>
-                    <h3>航海</h3>
-                    <result-list :results="results.navigation"></result-list>
-                    <h3>天文</h3>
-                    <result-list :results="results.astronomy"></result-list>
+                    <result-list :results="result" :key="result.key"
+                                 v-if="_.indexOf(['metric','navigation','astronomy'],result.key) >= 0"
+                                 v-for="result in units"></result-list>
                 </div>
                 <div v-if="display.all" class="col-md-6">
-                    <h3>中国(古制)</h3>
-                    <result-list :results="results.cn"></result-list>
-                    <h3>英/美</h3>
-                    <result-list :results="results.en_us"></result-list>
+                    <result-list :results="result" :key="result.key" v-if="_.indexOf(['cn','en_us'],result.key) >= 0"
+                                 v-for="result in units"></result-list>
                 </div>
                 <div v-if="display.clear" class="col-md-12">
                     <detail :detail="display.clearData"></detail>
@@ -125,7 +121,39 @@
                 <unit content="国际单位：米(m)"></unit>
             </div>
         </div>
-        <div role="tabpanel" class="tab-pane container">c</div>
+        <div id="area" role="tabpanel" class="tab-pane container">
+            <div class="row">
+                <div class="col-md-5">
+                    <my-input :value="input" @input="input = arguments[0]"></my-input>
+                </div>
+                <div class="col-md-3">
+                    <select-group-unit :units="units" :value="now" @change="now = arguments[0]"></select-group-unit>
+                </div>
+                <div class="col-md-1">
+                    <reversal v-on:click="reversal"></reversal>
+                </div>
+                <div class="col-md-3">
+                    <select-group-unit :units="[{name:'全部',values:[{key:'all',unit:'全部'}]}].concat(units)"
+                                       :value="future"
+                                       @change="future = arguments[0]"></select-group-unit>
+                </div>
+            </div>
+            <div class="row">
+                <div v-if="display.all" class="col-md-6">
+                    <result-list :results="result" :key="result.key"
+                                 v-if="_.indexOf(['metric','navigation','astronomy'],result.key) >= 0"
+                                 v-for="result in units"></result-list>
+                </div>
+                <div v-if="display.all" class="col-md-6">
+                    <result-list :results="result" :key="result.key" v-if="_.indexOf(['cn','en_us'],result.key) >= 0"
+                                 v-for="result in units"></result-list>
+                </div>
+                <div v-if="display.clear" class="col-md-12">
+                    <detail :detail="display.clearData"></detail>
+                </div>
+                <unit content="国际单位：米(m)"></unit>
+            </div>
+        </div>
         <div role="tabpanel" class="tab-pane container">...</div>
     </div>
 </div>
@@ -203,7 +231,7 @@
         template:
         "<select class=\"form-control\" :value='value' @change='change($event.target.value)'>\n" +
         "<optgroup :label='unit.name' v-for='unit in units'>" +
-        "<option :value=\"value.value\" v-for=\"value in unit.values\">{{value.text}}</option>\n" +
+        "<option :value=\"value.key\" v-for=\"value in unit.values\">{{value.unit}}</option>\n" +
         "</optgroup>" +
         "</select>",
         props: ['units', 'value'],
@@ -217,12 +245,21 @@
     Vue.component('result-list', {
         template:
         "<ul class='list-group'>" +
-        "<li class='list-group-item' style='height: 45px;' v-for='result in results'>" +
-        "<p style='float: left;display:inline-block;'>{{result.unit}}</p>" +
-        "<p style='float:right;display: inline-block;'>{{result.value}}</p>" +
+        "<h3>{{results.name}}</h3>" +
+        "<li class='list-group-item' style='height: 45px;' v-for='result in results.values'>" +
+        "<p-left :content='result.unit'></p-left>" +
+        "<p-right :content='result.value'></p-right>" +
         "</li>" +
         "</ul>",
         props: ['results']
+    });
+    Vue.component('p-left', {
+        template: "<p style='float: left;display:inline-block;'>{{content}}</p>",
+        props: ['content']
+    });
+    Vue.component('p-right', {
+        template: "<p style='float: right;display:inline-block;'>{{content}}</p>",
+        props: ['content']
     });
 
     var nav = new Vue({
@@ -233,7 +270,7 @@
                 {text: '长度', classObj: {active: true}},
                 {text: '面积', classObj: {active: false}}
             ],
-            lastActive: 0
+            lastActive: 1
         },
         methods: {
             active: function (even) {
@@ -364,53 +401,63 @@
                     key: 'metric',
                     name: '公制',
                     values: [
-                        {value: 'mm', text: '毫米'},
-                        {value: 'cm', text: '厘米'},
-                        {value: 'dm', text: '分米'},
-                        {value: 'm', text: '米'},
-                        {value: 'km', text: '千米'}
+                        {unit: 'mm(毫米)', key: 'mm', value: 0, formula: 1},
+                        {unit: 'cm(厘米)', key: 'cm', value: 0, formula: 10},
+                        {unit: 'dm(分米)', key: 'dm', value: 0, formula: 100},
+                        {unit: 'm(米)', key: 'm', value: 0, formula: 1000},
+                        {unit: 'km(千米)', key: 'km', value: 0, formula: 10000}
                     ]
                 },
                 {
                     key: 'cn',
                     name: '中国',
                     values: [
-                        {value: 'cn_hao', text: '毫'},
-                        {value: 'cn_li', text: '厘'},
-                        {value: 'cn_fen', text: '分'},
-                        {value: 'cn_cun', text: '寸'},
-                        {value: 'cn_chi', text: '尺'},
-                        {value: 'cn_zhang', text: '丈'},
-                        {value: 'cn_Li', text: '里'}
+                        {unit: '豪', key: 'cn_hao', value: 0, formula: 1 / 30},
+                        {unit: '厘', key: 'cn_li', value: 0, formula: 1 / 3},
+                        {unit: '分', key: 'cn_fen', value: 0, formula: 10 / 3},
+                        {unit: '寸', key: 'cn_cun', value: 0, formula: 100 / 3},
+                        {unit: '尺', key: 'cn_chi', value: 0, formula: 1000 / 3},
+                        {unit: '丈', key: 'cn_zhang', value: 0, formula: 10000 / 3},
+                        {unit: '里', key: 'cn_Li', value: 0, formula: 500000}
                     ]
                 },
                 {
                     key: 'navigation',
                     name: '航海',
                     values: [
-                        {value: 'nautical', text: '海里'},
-                        {value: 'xun', text: '英寻'}
+                        {unit: '海里', key: 'nautical', value: 0, formula: 1852000},
+                        {unit: '英寻', key: 'xun', value: 0, formula: 1828.8}
                     ]
                 },
                 {
                     key: 'astronomy',
                     name: '天文',
                     values: [
-                        {value: 'pc', text: '秒差距 (pc)1'},
-                        {value: 'light_year', text: '光年'},
-                        {value: 'ae', text: '天文单位 (AE)'},
-                        {value: 'light_second', text: '光秒'},
-                        {value: 'light_minute', text: '光分'}
+                        {key: 'pc', unit: '秒差距 (pc', value: 0, formula: 3.08567758 * Math.pow(10, 19)},
+                        {key: 'light_year', unit: '光年', value: 0, formula: 9.4605284 * Math.pow(10, 18)},
+                        {key: 'ae', unit: '天文单位 (AE)', value: 0, formula: 1.49597871 * Math.pow(10, 14)},
+                        {
+                            key: 'light_second',
+                            unit: '光秒',
+                            value: 0,
+                            formula: 2.99792458 * Math.pow(10, 11)
+                        },
+                        {
+                            key: 'light_minute',
+                            unit: '光分',
+                            value: 0,
+                            formula: 1.79875475 * Math.pow(10, 13)
+                        }
                     ]
                 },
                 {
                     key: 'en_us',
                     name: '英／美',
                     values: [
-                        {value: 'in', text: '英寸'},
-                        {value: 'ft', text: '英尺'},
-                        {value: 'mi', text: '英里'},
-                        {value: 'yd', text: '码'}
+                        {key: 'in', unit: '英寸(in)', value: 0, formula: 25.4},
+                        {key: 'ft', unit: '英尺(ft)', value: 0, formula: 304.8},
+                        {key: 'mi', unit: '英里(mi)', value: 0, formula: 1609344},
+                        {key: 'yd', unit: '码(yd)', value: 0, formula: 914.4}
                     ]
                 }
             ],
@@ -421,42 +468,7 @@
             },
             input: 0,
             now: 'cm',
-            future: 'all',
-            results: {
-                metric: [
-                    {unit: 'mm(毫米)', key: 'mm', value: 0, formula: 1},
-                    {unit: 'cm(厘米)', key: 'cm', value: 0, formula: 10},
-                    {unit: 'dm(分米)', key: 'dm', value: 0, formula: 100},
-                    {unit: 'm(米)', key: 'm', value: 0, formula: 1000},
-                    {unit: 'km(千米)', key: 'km', value: 0, formula: 10000}
-                ],
-                cn: [
-                    {unit: '豪', key: 'cn_hao', value: 0, formula: 1 / 30},
-                    {unit: '厘', key: 'cn_li', value: 0, formula: 1 / 3},
-                    {unit: '分', key: 'cn_fen', value: 0, formula: 10 / 3},
-                    {unit: '寸', key: 'cn_cun', value: 0, formula: 100 / 3},
-                    {unit: '尺', key: 'cn_chi', value: 0, formula: 1000 / 3},
-                    {unit: '丈', key: 'cn_zhang', value: 0, formula: 10000 / 3},
-                    {unit: '里', key: 'cn_Li', value: 0, formula: 500000}
-                ],
-                navigation: [
-                    {unit: 'nautical(海里)', key: 'nautical', value: 0, formula: 1852000},
-                    {unit: 'xun(英寻)', key: 'xun', value: 0, formula: 1828.8}
-                ],
-                astronomy: [
-                    {key: 'pc', unit: 'pc(秒差距 (pc)', value: 0, formula: 3.08567758 * Math.pow(10, 19)},
-                    {key: 'light_year', unit: 'light_year(光年)', value: 0, formula: 9.4605284 * Math.pow(10, 18)},
-                    {key: 'ae', unit: 'ae(天文单位 (AE))', value: 0, formula: 1.49597871 * Math.pow(10, 14)},
-                    {key: 'light_second', unit: 'light_second(光秒)', value: 0, formula: 2.99792458 * Math.pow(10, 11)},
-                    {key: 'light_minute', unit: 'light_minute(光分)', value: 0, formula: 1.79875475 * Math.pow(10, 13)}
-                ],
-                en_us: [
-                    {key: 'in', unit: '英寸(in)', value: 0, formula: 25.4},
-                    {key: 'ft', unit: '英尺(ft)', value: 0, formula: 304.8},
-                    {key: 'mi', unit: '英里(mi)', value: 0, formula: 1609344},
-                    {key: 'yd', unit: '码(yd)', value: 0, formula: 914.4}
-                ]
-            }
+            future: 'all'
         },
         watch: {
             input: function () {
@@ -483,45 +495,28 @@
                 var future_formula = 0;
                 var future_unit, now_unit;
                 _.forEach(this.units, function (value, key) {
-                    if (_.find(value.values, {'value': that.future}) !== undefined) {
-                        future_unit = _.result(_.find(value.values, {'value': that.future}), 'text')
+                    var future = _.find(value.values, {'key': that.future});
+                    var now = _.find(value.values, {'key': that.now});
+                    if (future !== undefined) {
+                        future_unit = _.result(future, 'unit');
+                        future_formula = _.result(future, 'formula');
                     }
-                    if (_.find(value.values, {'value': that.now}) !== undefined) {
-                        now_unit = _.result(_.find(value.values, {'value': that.now}), 'text')
-                    }
-                });
-                _.forIn(this.results, function (value, key) {//最小单位 mm赋值
-                    var current_formula = _.find(value, {'key': that.now});
-                    if (current_formula !== undefined) {
-                        now_formula = _.result(current_formula, 'formula');
-                    }
-                    if (that.future !== 'all') {
-                        var future_current_formula = _.find(value, {'key': that.future});
-                        if (future_current_formula) {
-                            future_formula = _.result(future_current_formula, 'formula');
-                            that.display.clearData = that.input + now_unit + '=' +
-                                that.input * now_formula / future_formula + future_unit
-                        }
+                    if (now !== undefined) {
+                        now_unit = _.result(now, 'unit');
+                        now_formula = _.result(now, 'formula');
                     }
                 });
-                _.forIn(this.results, function (group, g_key) {
-                    _.forEach(group, function (value, key) {
+                _.forIn(this.units, function (group, g_key) {
+                    _.forEach(group.values, function (value, key) {
                         value.value = parseFloat(that.input) * now_formula / parseFloat(value.formula);
-                        if (value.value > Math.pow(10, 7)) {
-                            value.value = value.value.toExponential(4)
-                        }
-                        if (value.value < Math.pow(10, -5)) {
-                            value.value = value.value.toExponential(4)
-                        }
-                        if (value.value < Math.pow(10,7) && value.value > Math.pow(10,-5)){
-                            console.log(typeof (value.value))
-                            if (typeof value.value === "string"){
-                                console.log(value)
-                            }
-                            value.value = parseFloat(value.value.toFixed(6));
-                        }
+                        value.value = _Run.toExponential(value.value,7,4)
                     })
                 });
+                if (this.future !== 'all') {
+                    var result = this.input * now_formula / future_formula;
+                    this.display.clearData = this.input + now_unit + '=' +
+                        _Run.toExponential(result,7,4) + ' ' +future_unit
+                }
             },
             reversal: function () {
                 if (this.future !== 'all') {
@@ -532,5 +527,109 @@
             }
         }
     });
+    var area = new Vue({
+        el:'#area',
+        data: {
+            units: [
+                {
+                    key: 'metric',
+                    name: '公制',
+                    values: [
+                        {unit: '平方毫米(m㎡)', key: 'mm', value: 0, formula: 1},
+                        {unit: '平方厘米(c㎡)', key: 'cm', value: 0, formula: Math.pow(10,2)},
+                        {unit: '平方分米(d㎡)', key: 'dm', value: 0, formula: Math.pow(10,4)},
+                        {unit: '平方米(㎡)', key: 'm', value: 0, formula: Math.pow(10,6)},
+                        {unit: '平方千米(k㎡)', key: 'km', value: 0, formula: Math.pow(10,12)}
+                    ]
+                },
+                {
+                    key: 'cn',
+                    name: '市制',
+                    values: [
+                        {unit: '平方寸', key: 'cn_cun', value: 0, formula: 1 / 0.0009},
+                        {unit: '平方尺', key: 'cn_chi', value: 0, formula: 1 / 9 / Math.pow(10,-6)},
+                        {unit: '分', key: 'cn_fen', value: 0, formula: 1 / 1.5 / Math.pow(10,-8)},
+                        {unit: '亩', key: 'cn_mu', value: 0, formula: 1 / 1.5 / Math.pow(10,-9)},
+                        {unit: '顷', key: 'cn_qing', value: 0, formula: 1 / 1.5 / Math.pow(10,-11)}
+                    ]
+                },
+                {
+                    key: 'en_us',
+                    name: '英／美',
+                    values: [
+                        {key: 'in', unit: '平方英寸(in)', value: 0, formula: 1 / 0.00155},
+                        {key: 'ft', unit: '平方英尺(ft)', value: 0, formula: 1 / 0.0000108},
+                        {key: 'yd', unit: '平方码(yd)', value: 0, formula: 1 / 1.196 / Math.pow(10,-6)},
+                        {key: 'mi', unit: '平方英里(mi)', value: 0, formula: 1 / 3.861 / Math.pow(10,-13)},
+                        {key: 'mi', unit: '英亩(acre)', value: 0, formula: 1 / 2.4711 / Math.pow(10,-10)},
+                    ]
+                }
+            ],
+            display: {
+                all: true,
+                clear: false,
+                clearData: null
+            },
+            input: 0,
+            now: 'cm',
+            future: 'all'
+        },
+        watch: {
+            input: function () {
+                this.translate()
+            },
+            now: function () {
+                this.translate()
+            },
+            future: function () {
+                if (this.future === 'all') {
+                    this.display.clear = false;
+                    this.display.all = true;
+                } else {
+                    this.translate();
+                    this.display.clear = true;
+                    this.display.all = false;
+                }
+            }
+        },
+        methods: {
+            translate: function () {
+                var that = this;
+                var now_formula = 0;
+                var future_formula = 0;
+                var future_unit, now_unit;
+                _.forEach(this.units, function (value, key) {
+                    var future = _.find(value.values, {'key': that.future});
+                    var now = _.find(value.values, {'key': that.now});
+                    if (future !== undefined) {
+                        future_unit = _.result(future, 'unit');
+                        future_formula = _.result(future, 'formula');
+                    }
+                    if (now !== undefined) {
+                        now_unit = _.result(now, 'unit');
+                        now_formula = _.result(now, 'formula');
+                    }
+                });
+                _.forIn(this.units, function (group, g_key) {
+                    _.forEach(group.values, function (value, key) {
+                        value.value = parseFloat(that.input) * now_formula / parseFloat(value.formula);
+                        value.value = _Run.toExponential(value.value,7,4)
+                    })
+                });
+                if (this.future !== 'all') {
+                    var result = this.input * now_formula / future_formula;
+                    this.display.clearData = this.input + now_unit + '=' +
+                        _Run.toExponential(result,7,4) + ' ' +future_unit
+                }
+            },
+            reversal: function () {
+                if (this.future !== 'all') {
+                    var now = this.now;
+                    this.now = this.future;
+                    this.future = now;
+                }
+            }
+        }
+    })
 </script>
 </html>
