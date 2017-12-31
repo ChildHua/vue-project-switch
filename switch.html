@@ -154,7 +154,39 @@
                 <unit content="国际单位：米(m)"></unit>
             </div>
         </div>
-        <div role="tabpanel" class="tab-pane container">...</div>
+        <div id="bulk" role="tabpanel" class="tab-pane container">
+            <div class="row">
+                <div class="col-md-5">
+                    <my-input :value="input" @input="input = arguments[0]"></my-input>
+                </div>
+                <div class="col-md-3">
+                    <select-group-unit :units="units" :value="now" @change="now = arguments[0]"></select-group-unit>
+                </div>
+                <div class="col-md-1">
+                    <reversal v-on:click="reversal"></reversal>
+                </div>
+                <div class="col-md-3">
+                    <select-group-unit :units="[{name:'全部',values:[{key:'all',unit:'全部'}]}].concat(units)"
+                                       :value="future"
+                                       @change="future = arguments[0]"></select-group-unit>
+                </div>
+            </div>
+            <div class="row">
+                <div v-if="display.all" class="col-md-6">
+                    <result-list :results="result" :key="result.key"
+                                 v-if="_.indexOf(['metric','navigation','astronomy'],result.key) >= 0"
+                                 v-for="result in units"></result-list>
+                </div>
+                <div v-if="display.all" class="col-md-6">
+                    <result-list :results="result" :key="result.key" v-if="_.indexOf(['cn','en_us'],result.key) >= 0"
+                                 v-for="result in units"></result-list>
+                </div>
+                <div v-if="display.clear" class="col-md-12">
+                    <detail :detail="display.clearData"></detail>
+                </div>
+                <unit content="国际单位：米(m)"></unit>
+            </div>
+        </div>
     </div>
 </div>
 </div>
@@ -268,7 +300,8 @@
             lists: [
                 {text: '存储单位', classObj: {active: false}},
                 {text: '长度', classObj: {active: true}},
-                {text: '面积', classObj: {active: false}}
+                {text: '面积', classObj: {active: false}},
+                {text: '体积', classObj: {active: false}}
             ],
             lastActive: 1
         },
@@ -572,6 +605,108 @@
             },
             input: 0,
             now: 'cm',
+            future: 'all'
+        },
+        watch: {
+            input: function () {
+                this.translate()
+            },
+            now: function () {
+                this.translate()
+            },
+            future: function () {
+                if (this.future === 'all') {
+                    this.display.clear = false;
+                    this.display.all = true;
+                } else {
+                    this.translate();
+                    this.display.clear = true;
+                    this.display.all = false;
+                }
+            }
+        },
+        methods: {
+            translate: function () {
+                var that = this;
+                var now_formula = 0;
+                var future_formula = 0;
+                var future_unit, now_unit;
+                _.forEach(this.units, function (value, key) {
+                    var future = _.find(value.values, {'key': that.future});
+                    var now = _.find(value.values, {'key': that.now});
+                    if (future !== undefined) {
+                        future_unit = _.result(future, 'unit');
+                        future_formula = _.result(future, 'formula');
+                    }
+                    if (now !== undefined) {
+                        now_unit = _.result(now, 'unit');
+                        now_formula = _.result(now, 'formula');
+                    }
+                });
+                _.forIn(this.units, function (group, g_key) {
+                    _.forEach(group.values, function (value, key) {
+                        value.value = parseFloat(that.input) * now_formula / parseFloat(value.formula);
+                        value.value = _Run.toExponential(value.value,7,4)
+                    })
+                });
+                if (this.future !== 'all') {
+                    var result = this.input * now_formula / future_formula;
+                    this.display.clearData = this.input + now_unit + '=' +
+                        _Run.toExponential(result,7,4) + ' ' +future_unit
+                }
+            },
+            reversal: function () {
+                if (this.future !== 'all') {
+                    var now = this.now;
+                    this.now = this.future;
+                    this.future = now;
+                }
+            }
+        }
+    })
+
+    var bulk = new Vue({
+        el:'#bulk',
+        data: {
+            units: [
+                {
+                    key: 'metric',
+                    name: '公制',
+                    values: [
+                        {unit: '立方毫米(mm³)', key: 'mm³', value: 0, formula: 1},
+                        {unit: '立方厘米(cm³)', key: 'cm³', value: 0, formula: Math.pow(10,3)},
+                        {unit: '立方分米(dm³)', key: 'dm³', value: 0, formula: Math.pow(10,6)},
+                        {unit: '立方米(m³)', key: 'm³', value: 0, formula: Math.pow(10,9)},
+                        {unit: '微升(ul)', key: 'ul', value: 0, formula: 1},
+                        {unit: '公石(hl)', key: 'hl', value: 0, formula: Math.pow(10,8)},
+                        {unit: '厘升(cl)', key: 'cl', value: 0, formula: Math.pow(10,4)},
+                        {unit: '毫升(ml)', key: 'ml', value: 0, formula: Math.pow(10,3)},
+                        {unit: '分升(dl)', key: 'dl', value: 0, formula: Math.pow(10,6)},
+                        {unit: '升(l)', key: 'l', value: 0, formula: Math.pow(10,6)}
+                    ]
+                },
+                {
+                    key: 'en_us',
+                    name: '英制',
+                    values: [
+                        {key: 'cu_in', unit: '立方英寸(cu_in)', value: 0, formula: 1 / 0.000061},
+                        {key: 'cu_ft', unit: '立方英尺(cu_ft)', value: 0, formula: 1 / 3.5315 / Math.pow(10,-8)},
+                        {key: 'cu_yd', unit: '立方码(cu_yd)', value: 0, formula: 1 / 1.3080 / Math.pow(10,-9)},
+                        {key: 'uk_gal', unit: '亩英尺(uk_gal)', value: 0, formula: 1 / 8.1071 / Math.pow(10,-13)},
+                        {key: 'us_gal', unit: '英制加仑(us_gal)', value: 0, formula: 1 / 2.1997 / Math.pow(10,-7)},
+                        {key: 'acre', unit: '美制加仑(acre)', value: 0, formula: 1 / 2.6417 / Math.pow(10,-7)},
+                        {key: 'uk_oz', unit: '英制液体盎司(uk_oz)', value: 0, formula: 1 / 0.0000352},
+                        {key: 'us_oz', unit: '美制液体盎司(us_oz)', value: 0, formula: 1 / 0.0000342}
+                    ]
+                }
+            ],
+            display: {
+                all: true,
+                clear: false,
+                clearData: null
+            },
+            input: 0,
+            now: 'cm³',
             future: 'all'
         },
         watch: {
