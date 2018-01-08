@@ -4,135 +4,84 @@
     <meta charset="UTF-8">
     <title>Vue js 2.0</title>
     <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
-    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/animate.css@3.5.1" rel="stylesheet" type="text/css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/velocity/1.2.3/velocity.min.js"></script>
     <script src="js/vue.js"></script>
+    <style>
+        .list-complete-item {
+            transition: all 1s;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        .list-complete-enter, .list-complete-leave-to
+            /* .list-complete-leave-active for below version 2.1.8 */ {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        .list-complete-leave-active {
+            position: absolute;
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-    <div id="app">
-        <p v-html="message"></p>
-    </div>
-    <div id="app-2">
-  <span v-bind:title="message">
-    鼠标悬停几秒钟查看此处动态绑定的提示信息！
-  </span>
-    </div>
-    <div id="app-3">
-        <p v-if="seen">现在你看到我了</p>
-    </div>
-
-    <div id="app-4">
-        <ol>
-            <li v-for="todo in todos">
-                {{ todo.text }}
-            </li>
-        </ol>
-    </div>
-    <div id="app-5">
-        <p>{{ message }}</p>
-        <button v-on:click="reverseMessage">逆转消息</button>
-    </div>
-    <div id="app-15">
-        <select>
-            <option v-for="option in options" :value="option.value">
-                {{ option.text }}
-            </option>
-        </select>
-    </div>
-
-    <div id="app-7">
-        <ol>
-            <!--
-              现在我们为每个 todo-item 提供 todo 对象
-              todo 对象是变量，即其内容可以是动态的。
-              我们也需要为每个组件提供一个“key”，晚些时候我们会做个解释。
-            -->
-            <ol>
-                <todo-item
-                        v-for="item in groceryList"
-                        v-bind:todo="item"
-                       >
-                </todo-item>
-            </ol>
-        </ol>
-    </div>
+<div id="staggered-list-demo">
+    <input v-select-self >
+    <anchored-heading :level="1"><a>Hello world!</a></anchored-heading>
 </div>
 </body>
+
 </html>
+
 <script>
-    var app = new Vue({
-        el: '#app',
-        data: {
-            message: '<p>Hello Vue!</p>'
+
+    Vue.directive('select-self',{
+        bind:function (el,binding,vnode) {
+            el.onclick = function () {
+                el.select()
+            }
+        }
+    });
+
+    var getChildrenTextContent = function (children) {
+        console.log(children)
+        return children.map(function (node) {
+            return node.children
+                ? getChildrenTextContent(node.children)
+                : node.text
+        }).join('')
+    }
+
+    Vue.component('anchored-heading', {
+        render: function (createElement) {
+            // create kebabCase id
+            var headingId = getChildrenTextContent(this.$slots.default)
+                .toLowerCase()
+                .replace(/\W+/g, '-')
+                .replace(/(^\-|\-$)/g, '')
+
+            return createElement(
+                'h' + this.level,
+                [
+                    createElement('a', {
+                        attrs: {
+                            name: headingId,
+                            href: '#' + headingId
+                        }
+                    }, this.$slots.default)
+                ]
+            )
         },
-        beforeMounted:function (){
-//            beforeUpdate:function () {
-                console.log(11)
-//            }
-        }
-
-    })
-    var app2 = new Vue({
-        el: '#app-2',
-        data: {
-            message: '页面加载于 ' + new Date().toLocaleString()
-        }
-    })
-
-    var app3 = new Vue({
-        el: '#app-3',
-        data: {
-            seen: true
-        }
-    })
-
-    var app4 = new Vue({
-        el: '#app-4',
-        data: {
-            todos: [
-                { text: '学习 JavaScript' },
-                { text: '学习 Vue' },
-                { text: '整个牛项目' }
-            ]
-        }
-    })
-
-    var app5 = new Vue({
-        el: '#app-5',
-        data: {
-            message: 'Hello Vue.js!'
-        },
-        methods: {
-            reverseMessage: function () {
-                this.message = this.message.split('').reverse().join('')
+        props: {
+            level: {
+                type: Number,
+                required: true
             }
         }
     })
-
-    var app15 = new Vue({
-        el: '#app-15',
-        data: {
-            options: [
-                { value:1,text: '学习 JavaScript' },
-                { value:2,text: '学习 Vue' },
-                { value:3,text: '整个牛项目' }
-            ]
-        }
-    })
-
-    Vue.component('todo-item', {
-        props: ['todo'],
-        template: '<li>{{ todo.text }}</li>'
-    })
-    var app7 = new Vue({
-        el: '#app-7',
-        data: {
-            groceryList: [
-                { id: 0, text: '蔬菜' },
-                { id: 1, text: '奶酪' },
-                { id: 2, text: '随便其他什么人吃的东西' }
-            ]
-        }
+    new Vue({
+        el: '#staggered-list-demo'
     })
 
 </script>

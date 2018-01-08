@@ -37,7 +37,7 @@
                     <select-unit :units="units" :value="now" @change="now = arguments[0]"></select-unit>
                 </div>
                 <div class="col-md-1">
-                    <reversal v-on:click="reversal"></reversal>
+                    <reversal @click="reversal"></reversal>
                 </div>
                 <div class="col-md-3">
                     <select-unit :units="[{value:'all',text:'全部'}].concat(units)" :value="future"
