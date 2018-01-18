@@ -1,12 +1,13 @@
 const path = require('path');
-module.export = {
-    entry: 'main.js',
+module.exports = {
+    entry: './src/app.js',
     output: {
-        path: path.resolve(_dirname, 'dist'),
+        path: path.resolve(__dirname, 'dist'),
+        publicPath: '/dist/',
         filename: 'switch.js'
     },
-    module:{
-        rules:[
+    module: {
+        rules: [
             {
                 test: /\.css$/,
                 use: [
@@ -63,7 +64,8 @@ module.export = {
                 options: {
                     name: '[name].[ext]?[hash]'
                 }
-            }
+            },
+            { test: /\.(eot|woff|woff2|svg|ttf)([\?]?.*)$/, loader: "file-loader" }
         ]
     },
     resolve: {
@@ -71,5 +73,14 @@ module.export = {
             'vue$': 'vue/dist/vue.esm.js'
         },
         extensions: ['*', '.js', '.vue', '.json']
-    }
+    },
+    devServer: {
+        historyApiFallback: true,
+        noInfo: true,
+        overlay: true
+    },
+    performance: {
+        hints: false
+    },
+    devtool: '#eval-source-map'
 }
