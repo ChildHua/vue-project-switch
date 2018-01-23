@@ -8,7 +8,7 @@
 </template>
 <script>
     export default {
-        name: 'BaseSelectt',
+        name: 'BaseSelect',
         props: {
             units: {type: Array, default: []}, value: {type: String, default: ''}
         },

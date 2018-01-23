@@ -80,7 +80,7 @@
                             {text: 'cm(厘米)', key: 'cm', value: 0, formula: 10},
                             {text: 'dm(分米)', key: 'dm', value: 0, formula: 100},
                             {text: 'm(米)', key: 'm', value: 0, formula: 1000},
-                            {text: 'km(千米)', key: 'km', value: 0, formula: 10000}
+                            {text: 'km(千米)', key: 'km', value: 0, formula: 1000000}
                         ]
                     },
                     {
