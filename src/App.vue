@@ -24,7 +24,7 @@
     var _ = require('lodash');
     export default {
         components: {
-            BaseInput, Storage,Length
+            BaseInput, Storage,Length,Area,Volume
         },
         name: 'app',
         data() {
