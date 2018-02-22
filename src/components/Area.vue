@@ -111,7 +111,7 @@
                     concreteData: ''
                 },
                 input_val: 0,
-                from_key: 'c㎡',
+                from_key: 'cm',
                 to_key: 'all',
                 result: {
                     left: [],
@@ -132,7 +132,6 @@
         },
         methods: {
             reversal() {
-                console.log(1)
                 if (this.future !== 'all') {
                     let from_key = this.from_key;
                     this.from_key = this.to_key;
@@ -143,8 +142,10 @@
                 let to_obj = Object;
                 let from_obj = Object;
                 let that = this;
+                console.log(1)
                 _.forEach(this.optionsData, function (value, key) {
                     if (_.find(value.values, {'key': that.to_key})) {
+                        console.log(2)
                         to_obj = _.find(value.values, {'key': that.to_key});
                     }
                     if (_.find(value.values, {'key': that.from_key})){
